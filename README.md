@@ -40,10 +40,13 @@ When `fd.sh` is sourced during shell startup, it will change the current working
 $ cd $HOME/persistent/install/location
 $ git clone https://github.com/g1a/fd.git
 $ cd fd
-$ source fd-install.sh
+$ source fd-install.sh --with-cdd
 ```
 
 The `fd-install.sh` script will create a `$HOME/.fdrc` file that sources `fd.sh` in the location it was installed to. The initial rc file will include an export of `$FDPATH` with locations provided by the `fd-suggest` function. Edit `$FDPATH` to suit your preferences.
 
-Once this is done, you must add a line to source the `.fdrc` file to your `.bashrc` or other Bash startup rc file. Be sure to source cdd prior to fd if using that project with this one.
+The `--with-cdd` option will cause the installer to also install the [cdd](https://github.com/scriptworld/cdd) project, which provides a more robust implementation of the `..` function.
 
+## About
+
+The `fd` command was added to the [Utiliscripts project in 2015](https://github.com/greg-1-anderson/utiliscripts/commit/e2c02f5). The goal was to allow for projects to be organized hierarchically in the filesystem without requiring that the installation paths be memorized. It now exists in its own project to make it easier to install without taking on everything provided by Utiliscripts.

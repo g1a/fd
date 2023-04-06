@@ -113,6 +113,9 @@ function fd-cache-rebuild {
 
 alias fdcr=fd-cache-rebuild
 
+# Rebuild the cache every time we're reloaded
+fd-cache-rebuild
+
 # typeahed / complete function for the 'fd' command
 _fd_complete ()   #  By convention, the function name
 {                 #+ starts with an underscore.
@@ -130,14 +133,7 @@ _fd_complete ()   #  By convention, the function name
 
 complete -F _fd_complete fd
 
-function fd-suggest {
-  FDPATH=$(cd $HOME; find . -maxdepth 5 -type d \( -path './Library' -o -path '*/vendor' -o -path './Downloads' -o -path './.*' -o -path '*/tmp' \) -prune -o -name ".git" -print | sed -e 's#^./##' | grep '/[^/]*/' | sed -e 's#/[^/]*/.git$##' | sort | uniq | sed -e 's/^/"/' -e 's/$/:"\\/g')
-  echo "export FDPATH=\\"
-  echo "$FDPATH"
-  echo '"."'
-}
-
-if [[ -n "$(type cdd 2>&1)" ]] ; then
+if type cdd >/dev/null 2>&1 ; then
   alias ..=cdd
   complete -o dirnames -o nospace -F _cdd ..
 else
