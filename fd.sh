@@ -40,7 +40,10 @@ function restoredir {
 
 # When this function first loads, restore the
 # title and cwd previously saved with this tty.
-restoredir
+if [[ -z "$FDRESTORED" ]] ; then
+  restoredir
+  export FDRESTORED=1
+fi
 
 # Pop off the current 'title' directory and then go
 # back to the last 'title' directory we were at before.
@@ -103,8 +106,12 @@ function fd {
   done
 }
 
-# List all of the projects (directories) in FDPATH
-FD_PROJECTS="$((cd && find $(echo $FDPATH | tr ':' ' ') -maxdepth 1 -type d 2>/dev/null) | sed -e 's#.*/##' | sort | uniq)"
+# Rebuild the fd cache, used only in autocomplete
+function fd-cache-rebuild {
+  export FD_PROJECTS="$((cd && find $(echo $FDPATH | tr ':' ' ') -maxdepth 1 -type d 2>/dev/null) | sed -e 's#.*/##' | sort | uniq)"
+}
+
+alias fdcr=fd-cache-rebuild
 
 # typeahed / complete function for the 'fd' command
 _fd_complete ()   #  By convention, the function name
@@ -124,9 +131,10 @@ _fd_complete ()   #  By convention, the function name
 complete -F _fd_complete fd
 
 function fd-suggest {
-  FDPATH=$(cd $HOME; find . -maxdepth 5 -type d \( -path './Library' -o -path '*/vendor' -o -path './Downloads' -o -path './.*' -o -path '*/tmp' \) -prune -o -name ".git" -print | sed -e 's#^./##' | grep '/[^/]*/' | sed -e 's#/[^/]*/.git$##' | sort | uniq | sed -e 's/^/"/' -e 's/$/:"\\/g' -e '$ s/:"\\/"/')
+  FDPATH=$(cd $HOME; find . -maxdepth 5 -type d \( -path './Library' -o -path '*/vendor' -o -path './Downloads' -o -path './.*' -o -path '*/tmp' \) -prune -o -name ".git" -print | sed -e 's#^./##' | grep '/[^/]*/' | sed -e 's#/[^/]*/.git$##' | sort | uniq | sed -e 's/^/"/' -e 's/$/:"\\/g')
   echo "export FDPATH=\\"
   echo "$FDPATH"
+  echo '"."'
 }
 
 if [[ -n "$(type cdd 2>&1)" ]] ; then
