@@ -16,6 +16,9 @@ Return to the previous directory (wherever you were prior to running `fd`).
 - `rd`
 Redo directory -- reverses a `pd`.
 
+- `@`
+Run a command from another directory, and immediately restore the current working directory as soon as the command is finished. For example, `@ mysite drush status` will run `drush status` on the Drupal site located in the directory `mysite`. Equivalent to `fd dir; <command>; cd -`. **PRELIMINARY**; autocomplete works for the `dir` argument, but not for the command or command arguments.
+
 - `fd-cache-rebuild` (or `fdcr`)
 Directories added inside of directories in the `$FDPATH` are invisible to autocomplete until the fd cache is rebuilt (although `fd` will still find them if their full name is provided). Rebuild the cache to allow autocomplete to find them.
 

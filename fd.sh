@@ -92,23 +92,33 @@ function rd {
   fi
 }
 
+# Utility function: find a directory in the FDPATH
+function _find_dir {
+	s="$1"
+	for d in $(echo $FDPATH | tr ':' ' ')
+	do
+		if [ "${d:0:1}" != "/" ]
+		then
+			d="$HOME/$d"
+		fi
+		if [ -d "$d/$s" ]
+		then
+			echo "$d/$s"
+			break
+		fi
+	done
+}
+
 # Find a directory with a specified name in one of
 # our search locations
 function fd {
-  s="$1"
-  for d in $(echo $FDPATH | tr ':' ' ')
-  do
-    if [ "${d:0:1}" != "/" ]
-    then
-      d="$HOME/$d"
-    fi
-    if [ -d "$d/$s" ]
-    then
-      cd "$d/$s"
-      title
-      break
-    fi
-  done
+	d="$(_find_dir $1)"
+	if [[ -z "$d" ]] ; then
+		echo "$1: not found" >&2
+		return 1
+	fi
+	cd "$d"
+	title
 }
 
 # Rebuild the fd cache, used only in autocomplete
@@ -137,6 +147,31 @@ _fd_complete ()   #  By convention, the function name
 }
 
 complete -F _fd_complete fd
+
+function @ {
+	d="$(_find_dir $1)"
+	if [[ -z "$d" ]] ; then
+		echo "$1: not found" >&2
+		return 1
+	fi
+	shift
+	(
+		TEXT_RESET='\033[0m'
+		TEXT_GREEN='\033[0;32m'
+
+		relative="$(echo $d | sed -e "s#$HOME#~#")"
+
+		# Favor commands local to the directory over commands with the same name in the $PATH
+		PATH="bin:vendor/bin:$PATH"
+
+		printf "${TEXT_GREEN}> cd ${relative}; $@${TEXT_RESET}\n"
+		cd "$d"; "$@"
+	)
+}
+
+# TODO: This works for the first parameter, but we need to figure out how to call through to the default autocomplete.
+complete -F _fd_complete @
+
 
 if type cdd >/dev/null 2>&1 ; then
   alias ..=cdd
