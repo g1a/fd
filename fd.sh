@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # Use 'title' function to change the name of your Terminal window.
 # Make them easier to find in the window list.
 function title {
@@ -24,6 +25,10 @@ function title {
   then
     echo $cwd >> $termwindow/stack
   fi
+}
+
+function _title {
+  printf "\033];$1\007"
 }
 
 # Go back to the directory where the 'title' was last run
