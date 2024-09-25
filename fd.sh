@@ -92,6 +92,33 @@ function rd {
   fi
 }
 
+# 'bd' from https://github.com/vigneshwaranr/bd - thanks!
+# (simplified to just do -s behavior if full match not found)
+function bd() {
+  if [ $# -eq 0 ]
+  then
+    echo "Usage: bd <name of some parent folder>" >&2
+  else
+    OLDPWD=`pwd`
+
+    NEWPWD=`echo $OLDPWD | sed 's|\(.*/'$1'/\).*|\1|'`
+    index=`echo $NEWPWD | awk '{ print index($1,"/'$1'/"); }'`
+    if [ $index -eq 0 ]
+    then
+      NEWPWD=`echo $OLDPWD | sed 's|\(.*/'$1'[^/]*/\).*|\1|'`
+      index=`echo $NEWPWD | awk '{ print index($1,"/'$1'"); }'`
+    fi
+
+    if [ $index -eq 0 ]
+    then
+      echo "No such occurrence."
+    fi
+
+    echo $NEWPWD
+    cd "$NEWPWD"
+  fi
+}
+
 # Utility function: find a directory in the FDPATH
 function _find_dir {
 	s="$1"
@@ -130,6 +157,68 @@ alias fdcr=fd-cache-rebuild
 
 # Rebuild the cache every time we're reloaded
 fd-cache-rebuild
+
+# Find repositories in the fd path that have uncommitted changes
+function uncommitted {
+  s="$1"
+  for d in $(echo $FDPATH | tr ':' ' ')
+  do
+    if [ "${d:0:1}" != "/" ]
+    then
+      d="$HOME/$d"
+    fi
+    if [ -d "$d/$s" ]
+    then
+      (
+        for p in $(ls -d $d/$s/*/.git 2>/dev/null)
+        do
+          cd $(dirname $p)
+          diverged="$(git status | grep '\(Your branch and.*have diverged\|Your branch is ahead of\)')"
+          git diff-index --quiet HEAD --
+          if [ $? != 0 ] || [ -n "$diverged" ]
+          then
+            echo
+            echo "$(tput bold)$(tput setaf 1)=== $(pwd | sed -e "s#$HOME#~#") ===$(tput sgr0)"
+            git status
+          fi
+        done
+      )
+    fi
+  done
+}
+
+alias uc=uncommitted
+
+function show-local-working-copies {
+  for d in $(echo $FDPATH | tr ':' ' ')
+  do
+    if [ "${d:0:1}" != "/" ]
+    then
+      d="$HOME/$d"
+    fi
+    if [ -d "$d/$s" ]
+    then
+      (
+        for p in $(ls -d $d/$s/*/.git 2>/dev/null)
+        do
+          loc="$(echo $(dirname $p) | sed -e 's#//#/#g' -e "s#$HOME#~#")"
+          remote_url="$(cd $(dirname $p) && git config --get remote.origin.url)"
+
+          baseloc="$(basename $loc)"
+          baseurl="$(basename $remote_url .git)"
+
+          if [[ "$baseloc" == "$baseurl" ]]; then
+            # echo "$loc ($baseloc): $remote_url ($baseurl)"
+            echo
+            echo "# $baseloc"
+            echo "mkdir -p $(dirname $loc)"
+            echo "cd $(dirname $loc) && [ -d $baseloc ] || git clone $remote_url"
+          fi
+        done
+      )
+    fi
+  done
+}
 
 # typeahed / complete function for the 'fd' command
 _fd_complete ()   #  By convention, the function name

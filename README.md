@@ -33,6 +33,15 @@ Prints out a recommended `$FDPATH` variable, with a pre-populated list of search
 
 See [Installation](#installation) for more details. Note that `fd-suggest` only outputs the suggestion to the terminal; you must manually alter the `$FDPATH` in your `fdrc` file to persist it.
 
+- `uncommitted`
+Prints a list of all projects in the `$FDPATH` that have uncommitted changes, or that need to be pushed to the remote `origin`.
+
+- `show-local-working-copies`
+Outputs a script that clones all repositories that currently have local working copies in the `$FDPATH` of the current system. Useful for running on another computer, to ensure that you have all of the same projects available locally.
+
+- `bd`
+Change current working directory to a named parent directory.
+
 ## Passive Behavior
 
 When `fd.sh` is sourced during shell startup, it will change the current working directory back to the location it was previously at the last time the window was open (as identified by the tty). This is useful in conjunction with the [history-recall](https://github.com/g1a/history-recall) project, especially after a system restart on MacOS, when multiple terminal windows are restored.

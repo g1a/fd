@@ -5,7 +5,11 @@
 #
 # To install:
 #
-# $ source fd-install.sh
+#     $ source fd-install.sh [--bashrc | --bash_profile | --profile]
+#
+# By default, this script will install to ~/.bash_profile, unless it looks like
+# ~/.bash_profile sources ~/.bashrc (recommended), in which case we install to ~/.bashrc.
+# You may stipulate the exact install location by providing the appropriate flag.
 #
 
 WITH_CDD=false
@@ -29,6 +33,10 @@ while [ $# -gt 0 ] ; do
 	case "$option" in
 		--with-cdd )
 			WITH_CDD=true
+			;;
+
+		--no-cdd )
+			WITH_CDD=false
 			;;
 
 		--bashrc )
