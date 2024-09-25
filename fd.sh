@@ -269,34 +269,3 @@ else
   alias ..='cd ..'
 fi
 
-
-# Find repositories in the fd path that have uncommitted changes
-function uncommitted {
-  s="$1"
-  for d in $(echo $FDPATH | tr ':' ' ')
-  do
-    if [ "${d:0:1}" != "/" ]
-    then
-      d="$HOME/$d"
-    fi
-    if [ -d "$d/$s" ]
-    then
-      (
-        for p in $(ls -d $d/$s/*/.git 2>/dev/null)
-        do
-          cd $(dirname $p)
-          diverged="$(git status | grep '\(Your branch and.*have diverged\|Your branch is ahead of\)')"
-          git diff-index --quiet HEAD --
-          if [ $? != 0 ] || [ -n "$diverged" ]
-          then
-            echo
-            echo "$(tput bold)$(tput setaf 1)=== $(pwd | sed -e "s#$HOME#~#") ===$(tput sgr0)"
-            git status
-          fi
-        done
-      )
-    fi
-  done
-}
-
-alias uc=uncommitted
