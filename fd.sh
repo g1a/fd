@@ -156,6 +156,36 @@ function fd-cache-rebuild {
 
 alias fdcr=fd-cache-rebuild
 
+# Add the current git project's parent directory to the fd search path
+function fd-add {
+  local toplevel
+  toplevel="$(git rev-parse --show-toplevel 2>/dev/null)"
+  if [ -z "$toplevel" ]; then
+    echo "Not in a git repository." >&2
+    return 1
+  fi
+
+  local parent="${toplevel%/*}"
+  local relative="${parent#$HOME/}"
+  local entry="\"${relative}:\"\\"
+
+  if grep -qF "\"${relative}:\"" "$HOME/.fd-path"; then
+    echo "$(basename "$toplevel") is already in the fd search path"
+    return 0
+  fi
+
+  # Insert before the last line (which should always be ".")
+  local fdpath="$HOME/.fd-path"
+  local lastline
+  lastline="$(tail -n 1 "$fdpath")"
+  sed -i '' -e '$ d' "$fdpath"
+  echo "${entry}" >> "$fdpath"
+  echo "${lastline}" >> "$fdpath"
+
+  echo "Added ${relative} to the fd search path"
+  fd-cache-rebuild
+}
+
 # Rebuild the cache every time we're reloaded
 fd-cache-rebuild
 
