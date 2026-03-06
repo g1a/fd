@@ -14,6 +14,7 @@
 
 WITH_CDD=false
 FDRC="$HOME/.fdrc"
+FD_PATH="$HOME/.fd-path"
 
 # Get the path to the directory this script was ran from
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -107,21 +108,20 @@ cat <<- __EOF__ > $FDRC
 	# Use fd-suggest to refresh the FDPATH setting below.
 	source "$SCRIPT_DIR/fd-suggest.sh"
 
-	# List directory search location.
-	# Customize to suit
-__EOF__
-
-# Add the initial `fd-suggest` list to the configuration file
-fd-suggest >> $FDRC
-
-# Write the sourcing of the fd scripts to our .fdrc file
-cat <<- __EOF__ >> $FDRC
-
 	# Source the fd script
 	source "$SCRIPT_DIR/fd.sh"
 __EOF__
 
-echo 'Created new ~/.fdrc configuration file.'
+# Add the initial `fd-suggest` list to the configuration file
+(
+	echo '#!/bin/bash'
+	echo
+	echo '# List directory search locations.'
+	echo '# Customize to suit'
+	fd-suggest
+) >> $FD_PATH
+
+echo 'Created new ~/.fdrc configuration file and ~/.fd-path file.'
 
 # If it looks like the fdrc file is already being sourced, then exit.
 if grep -q fdrc "$HOME/$INSTALL_TO" ; then

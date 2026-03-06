@@ -150,6 +150,7 @@ function fd {
 
 # Rebuild the fd cache, used only in autocomplete
 function fd-cache-rebuild {
+  source $HOME/.fd-path
   export FD_PROJECTS="$((cd && find $(echo $FDPATH | tr ':' ' ') -maxdepth 1 -type d 2>/dev/null) | sed -e 's#.*/##' | grep -v '^\.' | sort | uniq)"
 }
 
