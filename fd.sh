@@ -150,7 +150,7 @@ function fd {
 
 # Rebuild the fd cache, used only in autocomplete
 function fd-cache-rebuild {
-  source $HOME/.fd-path
+  source $HOME/.config/fd/fd-path
   export FD_PROJECTS="$((cd && find $(echo $FDPATH | tr ':' ' ') -maxdepth 1 -type d 2>/dev/null) | sed -e 's#.*/##' | grep -v '^\.' | sort | uniq)"
 }
 
@@ -169,13 +169,13 @@ function fd-add {
   local relative="${parent#$HOME/}"
   local entry="\"${relative}:\"\\"
 
-  if grep -qF "\"${relative}:\"" "$HOME/.fd-path"; then
+  if grep -qF "\"${relative}:\"" "$HOME/.config/fd/fd-path"; then
     echo "$(basename "$toplevel") is already in the fd search path"
     return 0
   fi
 
   # Insert before the last line (which should always be ".")
-  local fdpath="$HOME/.fd-path"
+  local fdpath="$HOME/.config/fd/fd-path"
   local lastline
   lastline="$(tail -n 1 "$fdpath")"
   sed -i '' -e '$ d' "$fdpath"

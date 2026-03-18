@@ -55,7 +55,7 @@ $ cd fd
 $ source fd-install.sh --with-cdd
 ```
 
-The `fd-install.sh` script will create a `$HOME/.fdrc` file that sources `fd.sh` in the location it was installed to. The initial rc file will include an export of `$FDPATH` with locations provided by the `fd-suggest` function. Edit `$FDPATH` to suit your preferences.
+The `fd-install.sh` script will create a `$HOME/.config/fd/fdrc` file that sources `fd.sh` in the location it was installed to. The initial rc file will include an export of `$FDPATH` with locations provided by the `fd-suggest` function. Edit `$FDPATH` to suit your preferences.
 
 The `--with-cdd` option will cause the installer to also install the [cdd](https://github.com/scriptworld/cdd) project, which provides a more robust implementation of the `..` function.
 

@@ -13,8 +13,9 @@
 #
 
 WITH_CDD=false
-FDRC="$HOME/.fdrc"
-FD_PATH="$HOME/.fd-path"
+FD_CONFIG_DIR="$HOME/.config/fd"
+FDRC="$FD_CONFIG_DIR/fdrc"
+FD_PATH="$FD_CONFIG_DIR/fd-path"
 
 # Get the path to the directory this script was ran from
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -89,9 +90,12 @@ fi
 
 # Do not overwrite existing installations
 if [ -f "$FDRC" ] ; then
-	echo "fd is already installed (~/.fdrc file exists)"
+	echo "fd is already installed (~/.config/fd/fdrc file exists)"
 	return
 fi
+
+# Ensure config directory exists
+mkdir -p "$FD_CONFIG_DIR"
 
 # Source the fd-suggest.sh file so that function is available
 source "$SCRIPT_DIR/fd-suggest.sh"
@@ -121,11 +125,11 @@ __EOF__
 	fd-suggest
 ) >> $FD_PATH
 
-echo 'Created new ~/.fdrc configuration file and ~/.fd-path file.'
+echo 'Created new ~/.config/fd/fdrc configuration file and ~/.config/fd/fd-path file.'
 
 # If it looks like the fdrc file is already being sourced, then exit.
 if grep -q fdrc "$HOME/$INSTALL_TO" ; then
-	echo "~/.fdrc configuration file is already sourced from ~/$INSTALL_TO)"
+	echo "~/.config/fd/fdrc configuration file is already sourced from ~/$INSTALL_TO)"
 	return
 fi
 
@@ -133,10 +137,10 @@ cat <<- __EOF__ >> "$HOME/$INSTALL_TO"
 
 	# Source the fd configuration file.
 	# See: https://github.com/g1a/fd
-	source "$HOME/.fdrc"
+	source "$HOME/.config/fd/fdrc"
 __EOF__
 
-echo "Installed 'source ~/.fdrc' in ~/$INSTALL_TO"
+echo "Installed 'source ~/.config/fd/fdrc' in ~/$INSTALL_TO"
 
 # Source fd so that it is available in this shell.
-source ~/.fdrc
+source ~/.config/fd/fdrc
