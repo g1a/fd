@@ -62,7 +62,8 @@ fi
 
 # Install cdd first, if requested
 if $WITH_CDD ; then
-	CDDRC="$HOME/.cddrc"
+	CDDRC="$FD_CONFIG_DIR/cddrc"
+	mkdir -p "$FD_CONFIG_DIR"
 	CDD_PATH="$(dirname -- $SCRIPT_DIR)/cdd"
 	git clone https://github.com/scriptworld/cdd.git "$CDD_PATH"
 
@@ -74,18 +75,18 @@ if $WITH_CDD ; then
 		source "$CDD_PATH/cdd-completion.bash"
 __EOF__
 
-	echo 'Created new ~/.cddrc configuration file.'
+	echo 'Created new ~/.config/fd/cddrc configuration file.'
 
 	cat <<- __EOF__ >> "$HOME/$INSTALL_TO"
 
 		# Source the cdd configuration file.
 		# See: https://github.com/scriptworld/cdd
-		source "$HOME/.cddrc"
+		source "$HOME/.config/fd/cddrc"
 __EOF__
-	echo "Installed 'source ~/.cddrc' in ~/$INSTALL_TO"
+	echo "Installed 'source ~/.config/fd/cddrc' in ~/$INSTALL_TO"
 
 	# Source cdd so that it is available in this shell
-	source ~/.cddrc
+	source ~/.config/fd/cddrc
 fi
 
 # Do not overwrite existing installations
