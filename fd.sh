@@ -139,13 +139,24 @@ function _find_dir {
 # Find a directory with a specified name in one of
 # our search locations
 function fd {
-	d="$(_find_dir $1)"
-	if [[ -z "$d" ]] ; then
-		echo "$1: not found" >&2
-		return 1
-	fi
-	cd "$d"
-	title
+  d="$(_find_dir $1)"
+  if [[ -z "$d" ]] ; then
+    echo "$1: not found" >&2
+    return 1
+  fi
+  cd "$d"
+  title
+}
+
+# Print the path to a directory with a specified name in one of
+# our search locations
+function pfd {
+  d="$(_find_dir $1)"
+  if [[ -z "$d" ]] ; then
+    echo "$1: not found" >&2
+    return 1
+  fi
+  echo "$d"
 }
 
 # Rebuild the fd cache, used only in autocomplete
@@ -267,6 +278,7 @@ _fd_complete ()   #  By convention, the function name
 }
 
 complete -F _fd_complete fd
+complete -F _fd_complete pfd
 
 function @ {
 	d="$(_find_dir $1)"
