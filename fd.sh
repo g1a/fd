@@ -161,8 +161,10 @@ function pfd {
 
 # Rebuild the fd cache, used only in autocomplete
 function fd-cache-rebuild {
-  source $HOME/.config/fd/fd-path
-  export FD_PROJECTS="$((cd && find $(echo $FDPATH | tr ':' ' ') -maxdepth 1 -type d 2>/dev/null) | sed -e 's#.*/##' | grep -v '^\.' | sort | uniq)"
+  source "$HOME/.config/fd/fd-path"
+  mkdir -p "$HOME/.config/fd/cache"
+  # Use fd-all to list project names (short names) and write to cache file
+  fd-all -s > "$HOME/.config/fd/cache/projects"
 }
 
 alias fdcr=fd-cache-rebuild
@@ -201,7 +203,7 @@ function fd-add {
 fd-cache-rebuild
 
 # Find repositories in the fd path that have uncommitted changes
-function uncommitted {
+function _uncommitted_old {
   s="$1"
   for d in $(echo $FDPATH | tr ':' ' ')
   do
@@ -231,7 +233,7 @@ function uncommitted {
 
 alias uc=uncommitted
 
-function show-local-working-copies {
+function _show_local_working_copies_old {
   for d in $(echo $FDPATH | tr ':' ' ')
   do
     if [ "${d:0:1}" != "/" ]
@@ -263,16 +265,66 @@ function show-local-working-copies {
 }
 
 # typeahed / complete function for the 'fd' command
+
+# New simplified uncommitted function using fd-all
+function uncommitted {
+  local filter="$1"
+  fd-all | while IFS= read -r repo; do
+    if [ -n "$filter" ] && [[ "$repo" != *"/$filter/"* ]]; then
+      continue
+    fi
+    (
+      cd "$repo"
+      diverged=$(git status | grep -E '(Your branch and.*have diverged|Your branch is ahead of)')
+      if ! git diff-index --quiet HEAD -- || [ -n "$diverged" ]; then
+        echo
+        echo "$(tput bold)$(tput setaf 1)=== $(pwd | sed -e "s#$HOME#~#") ===$(tput sgr0)"
+        git status
+      fi
+    )
+  done
+}
+
+# New simplified show-local-working-copies using fd-all
+function show-local-working-copies {
+  local filter="$1"
+  fd-all | while IFS= read -r repo; do
+    if [ -n "$filter" ] && [[ "$repo" != *"/$filter/"* ]]; then
+      continue
+    fi
+    (
+      loc=$(echo "$repo" | sed -e 's#//#/#g' -e "s#$HOME#~#")
+      remote_url=$(git -C "$repo" config --get remote.origin.url)
+      baseloc=$(basename "$loc")
+      baseurl=$(basename "$remote_url" .git)
+      if [ "$baseloc" = "$baseurl" ]; then
+        echo
+        echo "# $baseloc"
+        echo "mkdir -p $(dirname "$loc")"
+        echo "cd $(dirname "$loc") && [ -d $baseloc ] || git clone $remote_url"
+      fi
+    )
+  done
+}
+
+# typeahed / complete function for the 'fd' command
 _fd_complete ()   #  By convention, the function name
 {                 #+ starts with an underscore.
   local cur
   # Pointer to current completion word.
   # By convention, it's named "cur" but this isn't strictly necessary.
 
-  COMPREPLY=()   # Array variable storing the possible completions.
+  COMPREPLY=()
   cur=${COMP_WORDS[COMP_CWORD]}
 
-  COMPREPLY=( $( compgen -W "$FD_PROJECTS" -- $cur ) )
+  # Load projects list from cache if available
+  local projects_file="$HOME/.config/fd/cache/projects"
+  local project_list=""
+  if [ -f "$projects_file" ]; then
+    project_list=$(tr '\n' ' ' < "$projects_file")
+  fi
+
+  COMPREPLY=( $(compgen -W "$project_list" -- "$cur") )
 
   return 0
 }
@@ -301,6 +353,28 @@ function @ {
 	)
 }
 
+function fd-all {
+  local short=0
+  if [ "$1" = "-s" ]; then
+    short=1
+    shift
+  fi
+  for d in $(echo $FDPATH | tr ':' ' '); do
+    if [ "${d:0:1}" != "/" ]; then
+      d="$HOME/$d"
+    fi
+    for repo in "$d"/*/.git; do
+      [ -d "$repo" ] || continue
+      parent="$(dirname "$repo")"
+      if [ $short -eq 1 ]; then
+        echo "$(basename "$parent")"
+      else
+        #echo "${parent/#$HOME/~}"
+        echo "$parent"
+      fi
+    done
+  done
+}
 # TODO: This works for the first parameter, but we need to figure out how to call through to the default autocomplete.
 complete -F _fd_complete @
 
