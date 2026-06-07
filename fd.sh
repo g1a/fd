@@ -159,6 +159,29 @@ function pfd {
   echo "$d"
 }
 
+# Print all of the projects in the $FD_PATH
+function fd-all {
+  local short=0
+  if [ "$1" = "-s" ]; then
+    short=1
+    shift
+  fi
+  for d in $(echo $FDPATH | tr ':' ' '); do
+    if [ "${d:0:1}" != "/" ]; then
+      d="$HOME/$d"
+    fi
+    for repo in "$d"/*/.git; do
+      [ -d "$repo" ] || continue
+      parent="$(dirname "$repo")"
+      if [ $short -eq 1 ]; then
+        echo "$(basename "$parent")"
+      else
+        echo "${parent/#$HOME/~}"
+      fi
+    done
+  done
+}
+
 # Rebuild the fd cache, used only in autocomplete
 function fd-cache-rebuild {
   source "$HOME/.config/fd/fd-path"
@@ -203,70 +226,6 @@ function fd-add {
 fd-cache-rebuild
 
 # Find repositories in the fd path that have uncommitted changes
-function _uncommitted_old {
-  s="$1"
-  for d in $(echo $FDPATH | tr ':' ' ')
-  do
-    if [ "${d:0:1}" != "/" ]
-    then
-      d="$HOME/$d"
-    fi
-    if [ -d "$d/$s" ]
-    then
-      (
-        for p in $(ls -d $d/$s/*/.git 2>/dev/null)
-        do
-          cd $(dirname $p)
-          diverged="$(git status | grep '\(Your branch and.*have diverged\|Your branch is ahead of\)')"
-          git diff-index --quiet HEAD --
-          if [ $? != 0 ] || [ -n "$diverged" ]
-          then
-            echo
-            echo "$(tput bold)$(tput setaf 1)=== $(pwd | sed -e "s#$HOME#~#") ===$(tput sgr0)"
-            git status
-          fi
-        done
-      )
-    fi
-  done
-}
-
-alias uc=uncommitted
-
-function _show_local_working_copies_old {
-  for d in $(echo $FDPATH | tr ':' ' ')
-  do
-    if [ "${d:0:1}" != "/" ]
-    then
-      d="$HOME/$d"
-    fi
-    if [ -d "$d/$s" ]
-    then
-      (
-        for p in $(ls -d $d/$s/*/.git 2>/dev/null)
-        do
-          loc="$(echo $(dirname $p) | sed -e 's#//#/#g' -e "s#$HOME#~#")"
-          remote_url="$(cd $(dirname $p) && git config --get remote.origin.url)"
-
-          baseloc="$(basename $loc)"
-          baseurl="$(basename $remote_url .git)"
-
-          if [[ "$baseloc" == "$baseurl" ]]; then
-            # echo "$loc ($baseloc): $remote_url ($baseurl)"
-            echo
-            echo "# $baseloc"
-            echo "mkdir -p $(dirname $loc)"
-            echo "cd $(dirname $loc) && [ -d $baseloc ] || git clone $remote_url"
-          fi
-        done
-      )
-    fi
-  done
-}
-
-# typeahed / complete function for the 'fd' command
-
-# New simplified uncommitted function using fd-all
 function uncommitted {
   local filter="$1"
   fd-all | while IFS= read -r repo; do
@@ -274,7 +233,7 @@ function uncommitted {
       continue
     fi
     (
-      cd "$repo"
+      cd "${repo/#\~/$HOME}"
       diverged=$(git status | grep -E '(Your branch and.*have diverged|Your branch is ahead of)')
       if ! git diff-index --quiet HEAD -- || [ -n "$diverged" ]; then
         echo
@@ -285,15 +244,17 @@ function uncommitted {
   done
 }
 
+alias uc=uncommitted
+
 # New simplified show-local-working-copies using fd-all
-function show-local-working-copies {
+function reclone-script {
   local filter="$1"
-  fd-all | while IFS= read -r repo; do
+  fd-all | while IFS= read -r loc; do
+    repo="${loc/#\~/$HOME}"
     if [ -n "$filter" ] && [[ "$repo" != *"/$filter/"* ]]; then
       continue
     fi
     (
-      loc=$(echo "$repo" | sed -e 's#//#/#g' -e "s#$HOME#~#")
       remote_url=$(git -C "$repo" config --get remote.origin.url)
       baseloc=$(basename "$loc")
       baseurl=$(basename "$remote_url" .git)
@@ -305,6 +266,11 @@ function show-local-working-copies {
       fi
     )
   done
+}
+
+# Old name of reclone-script for backwards compatibility
+function show-local-working-copies {
+  reclone-script "$*"
 }
 
 # typeahed / complete function for the 'fd' command
@@ -353,28 +319,6 @@ function @ {
 	)
 }
 
-function fd-all {
-  local short=0
-  if [ "$1" = "-s" ]; then
-    short=1
-    shift
-  fi
-  for d in $(echo $FDPATH | tr ':' ' '); do
-    if [ "${d:0:1}" != "/" ]; then
-      d="$HOME/$d"
-    fi
-    for repo in "$d"/*/.git; do
-      [ -d "$repo" ] || continue
-      parent="$(dirname "$repo")"
-      if [ $short -eq 1 ]; then
-        echo "$(basename "$parent")"
-      else
-        #echo "${parent/#$HOME/~}"
-        echo "$parent"
-      fi
-    done
-  done
-}
 # TODO: This works for the first parameter, but we need to figure out how to call through to the default autocomplete.
 complete -F _fd_complete @
 

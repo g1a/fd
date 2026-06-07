@@ -19,6 +19,9 @@ Redo directory -- reverses a `pd`.
 - `@`
 Run a command from another directory, and immediately restore the current working directory as soon as the command is finished. For example, `@ mysite drush status` will run `drush status` on the Drupal site located in the directory `mysite`. Equivalent to `fd dir; <command>; cd -`. **PRELIMINARY**; autocomplete works for the `dir` argument, but not for the command or command arguments.
 
+- `fd-add`
+Run from a git project (a location with a .git directory); adds that project to the search locations in the `$FD_PATH`.
+
 - `fd-cache-rebuild` (or `fdcr`)
 Directories added inside of directories in the `$FDPATH` are invisible to autocomplete until the fd cache is rebuilt (although `fd` will still find them if their full name is provided). Rebuild the cache to allow autocomplete to find them.
 
@@ -33,10 +36,13 @@ Prints out a recommended `$FDPATH` variable, with a pre-populated list of search
 
 See [Installation](#installation) for more details. Note that `fd-suggest` only outputs the suggestion to the terminal; you must manually alter the `$FDPATH` in your `fdrc` file to persist it.
 
+- `fd-all`
+Print the list of all projects found in the `$FD_PATH`
+
 - `uncommitted`
 Prints a list of all projects in the `$FDPATH` that have uncommitted changes, or that need to be pushed to the remote `origin`.
 
-- `show-local-working-copies`
+- `reclone-script`
 Outputs a script that clones all repositories that currently have local working copies in the `$FDPATH` of the current system. Useful for running on another computer, to ensure that you have all of the same projects available locally.
 
 - `bd`
