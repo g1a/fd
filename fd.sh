@@ -275,12 +275,24 @@ function show-local-working-copies {
 
 # Check if current branch appears amended compared to remote
 is-ammended() {
-  local remote="${1:-origin}"
-  # Get current branch name
+  local default_remote="${1:-origin}"
+  # Determine which remote to use: prefer the requested one if it exists, otherwise pick the first remote.
+  local remote
+  if git remote | grep -qx "$default_remote"; then
+    remote=$default_remote
+  else
+    remote=$(git remote | head -n1)
+  fi
+  # If there is no remote configured, skip this repository.
+  if [ -z "$remote" ]; then
+    return 0
+  fi
+
+  # Determine current branch
   local branch
   branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || { echo "Not a git repository." >&2; return 1; }
 
-  # Helper to print header once
+  # Helper to print a header once per repository
   local printed_header=0
   print_header() {
     if [ $printed_header -eq 0 ]; then
@@ -290,34 +302,33 @@ is-ammended() {
     fi
   }
 
-  # Verify branch exists on remote
+  # Verify the branch exists on the remote
   if ! git ls-remote --heads "$remote" "$branch" | grep -q "$branch"; then
     print_header
     echo "Warning: branch '$branch' does not exist on remote '$remote'."
     return 0
   fi
 
-  # Resolve SHAs
   local local_sha remote_sha
   local_sha=$(git rev-parse HEAD)
   remote_sha=$(git rev-parse "$remote/$branch")
 
-  # If local HEAD exists anywhere in the remote, silent
+  # If the local HEAD exists anywhere in the remote, stay silent
   if git branch -r --contains "$local_sha" >/dev/null 2>&1; then
     return 0
   fi
 
-  # If remote HEAD exists anywhere in the local branch, silent
+  # If the remote HEAD exists anywhere in the local history, stay silent
   if git merge-base --is-ancestor "$remote_sha" HEAD; then
     return 0
   fi
 
-  # If identical, nothing to do (no output)
+  # If both SHAs are identical, nothing to report
   if [ "$local_sha" = "$remote_sha" ]; then
     return 0
   fi
 
-  # Get author and subject of both HEADs
+  # Compare author and subject of the two HEAD commits
   local local_info remote_info
   local_info=$(git log -1 --pretty=format:%an:%s "$local_sha")
   remote_info=$(git log -1 --pretty=format:%an:%s "$remote_sha")
@@ -335,6 +346,7 @@ is-ammended() {
   print_header
   echo "Branch '$branch' is $ahead commits ahead and $behind commits behind '$remote/$branch'."
 }
+
 
 # Function to run is-ammended for every project in FDPATH
 ammended() {
