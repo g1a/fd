@@ -273,6 +273,83 @@ function show-local-working-copies {
   reclone-script "$*"
 }
 
+# Check if current branch appears amended compared to remote
+is-ammended() {
+  local remote="${1:-origin}"
+  # Get current branch name
+  local branch
+  branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || { echo "Not a git repository." >&2; return 1; }
+
+  # Helper to print header once
+  local printed_header=0
+  print_header() {
+    if [ $printed_header -eq 0 ]; then
+      echo
+      echo "=== $(pwd | sed -e \"s#$HOME#~#\") ==="
+      printed_header=1
+    fi
+  }
+
+  # Verify branch exists on remote
+  if ! git ls-remote --heads "$remote" "$branch" | grep -q "$branch"; then
+    print_header
+    echo "Warning: branch '$branch' does not exist on remote '$remote'."
+    return 0
+  fi
+
+  # Resolve SHAs
+  local local_sha remote_sha
+  local_sha=$(git rev-parse HEAD)
+  remote_sha=$(git rev-parse "$remote/$branch")
+
+  # If local HEAD exists anywhere in the remote, silent
+  if git branch -r --contains "$local_sha" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  # If remote HEAD exists anywhere in the local branch, silent
+  if git merge-base --is-ancestor "$remote_sha" HEAD; then
+    return 0
+  fi
+
+  # If identical, nothing to do (no output)
+  if [ "$local_sha" = "$remote_sha" ]; then
+    return 0
+  fi
+
+  # Get author and subject of both HEADs
+  local local_info remote_info
+  local_info=$(git log -1 --pretty=format:%an:%s "$local_sha")
+  remote_info=$(git log -1 --pretty=format:%an:%s "$remote_sha")
+
+  if [ "$local_info" = "$remote_info" ]; then
+    print_header
+    echo "Warning: branch '$branch' appears amended (author and message match remote)."
+    return 0
+  fi
+
+  # Show commit difference counts
+  local ahead behind
+  ahead=$(git rev-list --count "$remote/$branch"..HEAD)
+  behind=$(git rev-list --count HEAD.."$remote/$branch")
+  print_header
+  echo "Branch '$branch' is $ahead commits ahead and $behind commits behind '$remote/$branch'."
+}
+
+# Function to run is-ammended for every project in FDPATH
+ammended() {
+  local remote="${1:-origin}"
+  fd-all | while IFS= read -r repo; do
+    # Expand ~ to $HOME for cd
+    local dir="${repo/#\~/$HOME}"
+    if [ -d "$dir" ]; then
+      (cd "$dir" && is-ammended "$remote")
+    else
+      echo "Warning: directory $dir does not exist" >&2
+    fi
+  done
+}
+
 # typeahed / complete function for the 'fd' command
 _fd_complete ()   #  By convention, the function name
 {                 #+ starts with an underscore.

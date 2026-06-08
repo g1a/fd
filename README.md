@@ -42,6 +42,9 @@ Print the list of all projects found in the `$FD_PATH`
 - `uncommitted`
 Prints a list of all projects in the `$FDPATH` that have uncommitted changes, or that need to be pushed to the remote `origin`.
 
+- `ammended`
+Prints a list of all projects where the HEAD commit of the current branch is ammended from the HEAD commit on the remote branch. The primary use case is to audit for incongruous commit histories in local and remote repositories, as may arise when malware is force-pushed over existing pull requests.
+
 - `reclone-script`
 Outputs a script that clones all repositories that currently have local working copies in the `$FDPATH` of the current system. Useful for running on another computer, to ensure that you have all of the same projects available locally.
 
