@@ -274,7 +274,7 @@ function show-local-working-copies {
 }
 
 # Check if current branch appears amended compared to remote
-is-ammended() {
+is-amended() {
   local default_remote="${1:-origin}"
   # Determine which remote to use: prefer the requested one if it exists, otherwise pick the first remote.
   local remote
@@ -348,14 +348,14 @@ is-ammended() {
 }
 
 
-# Function to run is-ammended for every project in FDPATH
-ammended() {
+# Function to run is-amended for every project in FDPATH
+amended() {
   local remote="${1:-origin}"
   fd-all | while IFS= read -r repo; do
     # Expand ~ to $HOME for cd
     local dir="${repo/#\~/$HOME}"
     if [ -d "$dir" ]; then
-      (cd "$dir" && is-ammended "$remote")
+      (cd "$dir" && is-amended "$remote")
     else
       echo "Warning: directory $dir does not exist" >&2
     fi
