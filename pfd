@@ -1,0 +1,29 @@
+# Utility function: find a directory in the FDPATH
+function _find_dir {
+	s="$1"
+	for d in $(echo $FDPATH | tr ':' ' ')
+	do
+		if [ "${d:0:1}" != "/" ]
+		then
+			d="$HOME/$d"
+		fi
+		if [ -d "$d/$s" ]
+		then
+			echo "$d/$s"
+			break
+		fi
+	done
+}
+
+# Print the path to a directory with a specified name in one of
+# our search locations
+function pfd {
+  d="$(_find_dir $1)"
+  if [[ -z "$d" ]] ; then
+    echo "$1: not found" >&2
+    return 1
+  fi
+  echo "$d"
+}
+
+pfd "$@"

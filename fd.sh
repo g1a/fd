@@ -1,5 +1,9 @@
 #!/bin/bash
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+# Update our PATH if fd isn't already in the PATH (idempotent add)
+[ "$PATH" == "${PATH/fd/}" ] && export PATH="$PATH:$SCRIPT_DIR"
 
 # Use 'title' function to change the name of your Terminal window.
 # Make them easier to find in the window list.
@@ -146,17 +150,6 @@ function fd {
   fi
   cd "$d"
   title
-}
-
-# Print the path to a directory with a specified name in one of
-# our search locations
-function pfd {
-  d="$(_find_dir $1)"
-  if [[ -z "$d" ]] ; then
-    echo "$1: not found" >&2
-    return 1
-  fi
-  echo "$d"
 }
 
 # Print all of the projects in the $FD_PATH
