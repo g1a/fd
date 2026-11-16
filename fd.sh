@@ -242,6 +242,40 @@ function uncommitted {
 
 alias uc=uncommitted
 
+# Recursive helper for untracked; uses the _untracked_projects array set by the caller
+function _untracked_walk {
+  local dir="$1" sub p tracked
+  for sub in "$dir"/* "$dir"/.[!.]*; do
+    # Directories only (files are ignored); don't follow symlinks
+    [ -d "$sub" ] && [ ! -L "$sub" ] || continue
+    # Git working copies are skipped, along with their children
+    [ -e "$sub/.git" ] && continue
+    # A directory is tracked if some fd-all project lives beneath it
+    tracked=0
+    for p in "${_untracked_projects[@]}"; do
+      if [[ "$p" == "$sub/"* ]]; then
+        tracked=1
+        break
+      fi
+    done
+    if [ $tracked -eq 1 ]; then
+      _untracked_walk "$sub"
+    else
+      echo "${sub/#$HOME/\~}"
+    fi
+  done
+}
+
+# Find directories under $HOME that are not git projects and do not lead to
+# any project listed by fd-all
+function untracked {
+  local _untracked_projects=() loc
+  while IFS= read -r loc; do
+    _untracked_projects+=("${loc/#\~/$HOME}")
+  done < <(fd-all)
+  _untracked_walk "$HOME"
+}
+
 # New simplified show-local-working-copies using fd-all
 function reclone-script {
   local filter="$1"
