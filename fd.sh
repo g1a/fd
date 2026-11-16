@@ -248,6 +248,10 @@ function _untracked_walk {
   for sub in "$dir"/*; do
     # Directories only (files are ignored); don't follow symlinks
     [ -d "$sub" ] && [ ! -L "$sub" ] || continue
+    # Directories listed in ~/.untrackedignore are skipped, along with their children
+    for p in "${_untracked_ignore[@]}"; do
+      [ "$sub" = "$p" ] && continue 2
+    done
     # Git working copies are skipped, along with their children
     [ -e "$sub/.git" ] && continue
     # A directory is tracked if some fd-all project lives beneath it
@@ -268,12 +272,32 @@ function _untracked_walk {
 }
 
 # Find directories under $HOME that are not git projects and do not lead to
-# any project listed by fd-all
+# any project listed by fd-all. Directories listed in ~/.untrackedignore (one
+# per line; ~/ or relative-to-$HOME paths; blank lines and # comments allowed)
+# are skipped.
 function untracked {
-  local _untracked_projects=() loc
+  local _untracked_projects=() _untracked_ignore=() loc
   while IFS= read -r loc; do
     _untracked_projects+=("${loc/#\~/$HOME}")
   done < <(fd-all)
+  if [ -f "$HOME/.untrackedignore" ]; then
+    while IFS= read -r loc || [ -n "$loc" ]; do
+      loc="${loc%$'\r'}"
+      # Trim surrounding whitespace
+      loc="${loc#"${loc%%[![:space:]]*}"}"
+      loc="${loc%"${loc##*[![:space:]]}"}"
+      case "$loc" in
+        ''|'#'*) continue ;;
+        '~') loc="$HOME" ;;
+        '~/'*) loc="$HOME/${loc#\~/}" ;;
+        /*) ;;
+        *) loc="$HOME/$loc" ;;
+      esac
+      # Ignore any trailing slashes
+      while [ "${#loc}" -gt 1 ] && [ "${loc%/}" != "$loc" ]; do loc="${loc%/}"; done
+      _untracked_ignore+=("$loc")
+    done < "$HOME/.untrackedignore"
+  fi
   _untracked_walk "$HOME"
 }
 
