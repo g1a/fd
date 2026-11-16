@@ -261,7 +261,8 @@ function _untracked_walk {
     if [ $tracked -eq 1 ]; then
       _untracked_walk "$sub"
     else
-      echo "${sub/#$HOME/\~}"
+      # Leading ~ stays literal; the rest of the path is shell-escaped
+      printf '~%q\n' "${sub#$HOME}"
     fi
   done
 }
