@@ -245,7 +245,7 @@ alias uc=uncommitted
 # Recursive helper for untracked; uses the _untracked_projects array set by the caller
 function _untracked_walk {
   local dir="$1" sub p tracked
-  for sub in "$dir"/* "$dir"/.[!.]*; do
+  for sub in "$dir"/*; do
     # Directories only (files are ignored); don't follow symlinks
     [ -d "$sub" ] && [ ! -L "$sub" ] || continue
     # Git working copies are skipped, along with their children
