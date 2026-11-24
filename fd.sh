@@ -304,7 +304,8 @@ function untracked {
 # Run 'git pull' on the default branch of every clean repository in the fd path.
 # Repositories on other branches are switched to the default branch for the
 # pull, and then switched back.  Repositories with uncommitted changes are
-# skipped, and listed at the end.
+# skipped, and listed at the end.  Repositories with no remote are noted, and
+# also listed at the end.
 function pull-all {
   local filter="$1"
   local skipped=()
@@ -315,6 +316,11 @@ function pull-all {
     fi
     dir="${repo/#\~/$HOME}"
     name="$(basename "$dir")"
+    if [ -z "$(git -C "$dir" remote)" ]; then
+      echo "$name: has no remote" >&2
+      skipped+=("$name")
+      continue
+    fi
     current="$(git -C "$dir" symbolic-ref --short -q HEAD)"
     if [ -z "$current" ] || ! git -C "$dir" diff-index --quiet HEAD --; then
       skipped+=("$name")
