@@ -366,11 +366,15 @@ function reclone-script {
       remote_url=$(git -C "$repo" config --get remote.origin.url)
       baseloc=$(basename "$loc")
       baseurl=$(basename "$remote_url" .git)
+      cloneloc="$baseloc"
       if [ "$baseloc" = "$baseurl" ]; then
+        cloneloc=""
+      fi
+      if [ -n "$baseurl" ]; then
         echo
-        echo "# $baseloc"
+        echo "# $baseurl"
         echo "mkdir -p $(dirname "$loc")"
-        echo "cd $(dirname "$loc") && [ -d $baseloc ] || git clone $remote_url"
+        echo "cd $(dirname "$loc") && [ -d $baseloc ] || git clone $remote_url $cloneloc"
       fi
     )
   done
