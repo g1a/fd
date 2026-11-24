@@ -42,6 +42,9 @@ Print the list of all projects found in the `$FD_PATH`
 - `uncommitted`
 Prints a list of all projects in the `$FDPATH` that have uncommitted changes, or that need to be pushed to the remote `origin`.
 
+- `pull-all`
+Runs `git pull` on the default branch of every project in the `$FDPATH`. Projects on other branches are switched to the default branch for the pull and then switched back. Projects with uncommitted changes are skipped, and listed at the end.
+
 - `amended`
 Prints a list of all projects where the HEAD commit of the current branch is amended from the HEAD commit on the remote branch. The primary use case is to audit for incongruous commit histories in local and remote repositories, as may arise when malware is force-pushed over existing pull requests.
 

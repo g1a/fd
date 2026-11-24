@@ -301,6 +301,59 @@ function untracked {
   _untracked_walk "$HOME"
 }
 
+# Run 'git pull' on the default branch of every clean repository in the fd path.
+# Repositories on other branches are switched to the default branch for the
+# pull, and then switched back.  Repositories with uncommitted changes are
+# skipped, and listed at the end.
+function pull-all {
+  local filter="$1"
+  local skipped=()
+  local repo dir name current default
+  while IFS= read -r repo; do
+    if [ -n "$filter" ] && [[ "$repo" != *"/$filter/"* ]]; then
+      continue
+    fi
+    dir="${repo/#\~/$HOME}"
+    name="$(basename "$dir")"
+    current="$(git -C "$dir" symbolic-ref --short -q HEAD)"
+    if [ -z "$current" ] || ! git -C "$dir" diff-index --quiet HEAD --; then
+      skipped+=("$name")
+      continue
+    fi
+
+    # Find the default branch: origin/HEAD if set, otherwise main or master
+    default="$(git -C "$dir" symbolic-ref --short -q refs/remotes/origin/HEAD 2>/dev/null)"
+    default="${default#origin/}"
+    if [ -z "$default" ]; then
+      for default in main master; do
+        git -C "$dir" show-ref --verify --quiet "refs/heads/$default" && break
+        default=""
+      done
+    fi
+    if [ -z "$default" ]; then
+      echo "$name: could not determine the default branch" >&2
+      skipped+=("$name")
+      continue
+    fi
+
+    echo "$(tput bold)=== $name ===$(tput sgr0)"
+    if [ "$current" = "$default" ]; then
+      git -C "$dir" pull
+    elif git -C "$dir" checkout --quiet "$default"; then
+      git -C "$dir" pull
+      git -C "$dir" checkout --quiet "$current"
+    else
+      skipped+=("$name")
+    fi
+  done < <(fd-all)
+
+  if [ ${#skipped[@]} -gt 0 ]; then
+    echo
+    echo "$(tput bold)$(tput setaf 1)The following projects could not be updated:$(tput sgr0)"
+    printf '  %s\n' "${skipped[@]}"
+  fi
+}
+
 # New simplified show-local-working-copies using fd-all
 function reclone-script {
   local filter="$1"
