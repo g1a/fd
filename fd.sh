@@ -230,7 +230,7 @@ function uncommitted {
       diverged=$(git status | grep -E '(Your branch and.*have diverged|Your branch is ahead of)')
       noremote=""
       [ -z "$(git remote)" ] && noremote=1
-      if ! git diff-index --quiet HEAD -- || [ -n "$diverged" ] || [ -n "$noremote" ]; then
+      if [ -n "$(git status --porcelain)" ] || [ -n "$diverged" ] || [ -n "$noremote" ]; then
         echo
         echo "$(tput bold)$(tput setaf 1)=== $(pwd | sed -e "s#$HOME#~#") ===$(tput sgr0)"
         [ -n "$noremote" ] && echo "No remote defined."
